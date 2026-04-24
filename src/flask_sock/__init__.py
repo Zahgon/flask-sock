@@ -24,9 +24,7 @@ class Sock:
                     be called if the application instance was not passed as
                     an argument to the constructor.
         """
-        if self.bp:
-            app.register_blueprint(self.bp)
-        self.app = app
+        pass
 
     def route(self, path, bp=None, **kwargs):
         """Decorator to create a WebSocket route.
@@ -53,50 +51,4 @@ class Sock:
         :param kwargs: additional route options. See the Flask documentation
                        for the ``app.route`` decorator for details.
         """
-        def decorator(f):
-            @wraps(f)
-            def websocket_route(*args, **kwargs):  # pragma: no cover
-                ws = Server(request.environ, **current_app.config.get(
-                    'SOCK_SERVER_OPTIONS', {}))
-                try:
-                    f(ws, *args, **kwargs)
-                except ConnectionClosed:
-                    pass
-                try:
-                    ws.close()
-                except:  # noqa: E722
-                    pass
-
-                class WebSocketResponse(Response):
-                    def __call__(self, *args, **kwargs):
-                        if ws.mode == 'eventlet':
-                            try:
-                                from eventlet.wsgi import WSGI_LOCAL
-                                ALREADY_HANDLED = []
-                            except ImportError:
-                                from eventlet.wsgi import ALREADY_HANDLED
-                                WSGI_LOCAL = None
-
-                            if hasattr(WSGI_LOCAL, 'already_handled'):
-                                WSGI_LOCAL.already_handled = True
-                            return ALREADY_HANDLED
-                        elif ws.mode == 'gunicorn':
-                            raise StopIteration()
-                        elif ws.mode == 'werkzeug':
-                            return super().__call__(*args, **kwargs)
-                        else:
-                            return []
-
-                return WebSocketResponse()
-
-            kwargs['websocket'] = True
-            if bp:
-                bp.route(path, **kwargs)(websocket_route)
-            elif self.app:
-                self.app.route(path, **kwargs)(websocket_route)
-            else:
-                if self.bp is None:  # pragma: no branch
-                    self.bp = Blueprint('__flask_sock', __name__)
-                self.bp.route(path, **kwargs)(websocket_route)
-
-        return decorator
+        pass
